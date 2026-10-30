@@ -354,6 +354,9 @@ No Claude Desktop, edite `%APPDATA%\Claude\claude_desktop_config.json`:
   }
 }
 ```
+### VIDEO DE CONFIGURAÇÃO DE FORMA SIMPLIFICADA
+
+ ▶️ **[Clique aqui para assistir ao vídeo completo no Google Drive Assiste em Full Hd (1080P)](https://drive.google.com/file/d/1RuRtrSBFtQeTANl9zyOVoYRCAzmcajUb/view?usp=drive_link)**
 
 ### C. Cursor AI
 No Cursor, configure em *Features > MCP Servers* apontando para o binário Python do `.venv` com argumento `-m ad_mcp`.
