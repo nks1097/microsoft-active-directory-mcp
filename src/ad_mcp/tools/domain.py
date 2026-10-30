@@ -40,10 +40,11 @@ def ad_get_domain_info(
     """
 
     adsi = """
-    $root = if ($adUser -and $adPass) { New-Object System.DirectoryServices.DirectoryEntry("LDAP://$adServer/RootDSE", $adUser, $adPass) } else { [adsi]"LDAP://$adServer/RootDSE" }
-    $defNC = $root.defaultNamingContext
-    $entry = if ($adUser -and $adPass) { New-Object System.DirectoryServices.DirectoryEntry("LDAP://$adServer/$defNC", $adUser, $adPass) } else { [adsi]"LDAP://$adServer/$defNC" }
+    $root = if ($adUser -and $adPass) { [adsi](New-Object System.DirectoryServices.DirectoryEntry("LDAP://$adServer/RootDSE", $adUser, $adPass)) } else { [adsi]"LDAP://$adServer/RootDSE" }
+    $defNC = [string]$root.defaultNamingContext
+    $entry = if ($adUser -and $adPass) { [adsi](New-Object System.DirectoryServices.DirectoryEntry("LDAP://$adServer/$defNC", $adUser, $adPass)) } else { [adsi]"LDAP://$adServer/$defNC" }
     [PSCustomObject]@{
+        Name = [string]$entry.name
         DnsRoot = [string]$root.dnsHostName
         DistinguishedName = [string]$defNC
         DomainMode = [string]$root.domainFunctionality

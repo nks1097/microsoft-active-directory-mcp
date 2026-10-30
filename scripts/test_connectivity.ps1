@@ -114,16 +114,8 @@ try {
     $pythonBin = Join-Path $projectRoot ".venv\Scripts\python.exe"
     
     if (Test-Path $pythonBin) {
-        & $pythonBin -c "
-from ad_mcp.tools.domain import ad_get_domain_info
-res = ad_get_domain_info()
-if res.get('success'):
-    print('  [OK] Consulta AD bem-sucedida!')
-    print(f'       Naming Context: {res.get(\"data\", {}).get(\"DistinguishedName\")}')
-    print(f'       DnsRoot:        {res.get(\"data\", {}).get(\"DnsRoot\")}')
-else:
-    print(f'  [AVISO] Consulta retornou erro: {res.get(\"error\")}')
-"
+        $pyCheck = "from ad_mcp.tools.domain import ad_get_domain_info; res = ad_get_domain_info(); data = res.get('data', {}); ok = res.get('success'); print('  [OK] Consulta AD bem-sucedida!' if ok else '  [FALHA] ' + str(res.get('error'))); print('       DistinguishedName:', data.get('DistinguishedName')); print('       DnsRoot:          ', data.get('DnsRoot')); print('       Forest:           ', data.get('Forest'))"
+        & $pythonBin -c $pyCheck
     }
 } catch {
     Write-Host "  [INFO] Consulta Python nao executada: $($_.Exception.Message)" -ForegroundColor Gray

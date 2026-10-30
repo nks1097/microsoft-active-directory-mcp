@@ -3,10 +3,14 @@ Configuration module for Microsoft Active Directory MCP Server.
 """
 
 from enum import Enum
+from pathlib import Path
 from typing import Optional
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_ENV_PATH = _PROJECT_ROOT / ".env"
 
 
 class OperationMode(str, Enum):
@@ -38,7 +42,7 @@ class Settings(BaseSettings):
     """Active Directory MCP Server Settings."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(_ENV_PATH) if _ENV_PATH.exists() else ".env",
         env_file_encoding="utf-8",
         env_prefix="AD_",
         case_sensitive=False,
