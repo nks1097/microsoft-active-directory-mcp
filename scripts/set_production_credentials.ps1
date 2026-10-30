@@ -14,7 +14,8 @@ param(
 Write-Host "=== Active Directory MCP - Secure Credential Vault Setup ===" -ForegroundColor Cyan
 Write-Host "Prompting for credentials to store encrypted in Windows Vault..." -ForegroundColor Yellow
 
-$cred = Get-Credential -Title "Active Directory MCP Service Account" -Message "Enter the service account username (e.g. DOMAIN\svc_mcp) and password:"
+# In Windows PowerShell 5.1, Get-Credential supports -Message and -UserName (no -Title)
+$cred = Get-Credential -Message "Active Directory MCP: Digite as credenciais da conta de servico (ex: DOMAIN\usuario)"
 
 if (-not $cred) {
     Write-Error "No credentials provided. Operation cancelled."
@@ -24,11 +25,25 @@ if (-not $cred) {
 $username = $cred.UserName
 $password = $cred.GetNetworkCredential().Password
 
-# Call Python helper to write into Windows Credential Vault
-& python -c "
+# Locate project virtual environment Python or fallback to PATH
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$pythonBin = if (Test-Path "$scriptDir\..\.venv\Scripts\python.exe") { 
+    "$scriptDir\..\.venv\Scripts\python.exe" 
+} else { 
+    "python" 
+}
+
+# Pass credentials safely via ephemeral environment variables (protects against special characters in passwords)
+$env:_TEMP_VAULT_USER = $username
+$env:_TEMP_VAULT_PASS = $password
+
+& $pythonBin -c "
+import os
 from ad_mcp.auth.credentials import credential_manager
-credential_manager.store_in_vault('$TargetName', r'''$username''', r'''$password''')
-print('SUCCESS: Credentials encrypted and saved to Windows Credential Vault under target ''$TargetName''.')
+u = os.environ.pop('_TEMP_VAULT_USER', '')
+p = os.environ.pop('_TEMP_VAULT_PASS', '')
+credential_manager.store_in_vault('$TargetName', u, p)
+print(f'SUCCESS: Credentials encrypted and saved to Windows Credential Vault under target ''$TargetName''.')
 "
 
 Write-Host ""
