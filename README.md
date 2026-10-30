@@ -1,6 +1,6 @@
 # Microsoft Active Directory MCP Server — 100 Essential Tools
 
-[![CI Pipeline](https://github.com/your-org/microsoft-active-directory-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/microsoft-active-directory-mcp/actions/workflows/ci.yml)
+[![CI Pipeline](https://github.com/nks1097/microsoft-active-directory-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/nks1097/microsoft-active-directory-mcp/actions/workflows/ci.yml)
 [![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](https://www.python.org/)
 [![MCP Specification](https://img.shields.io/badge/MCP-SDK%202.x-green.svg)](https://modelcontextprotocol.io/)
 [![Tools Count](https://img.shields.io/badge/tools-100%20functional-orange.svg)](#3-catálogo-das-100-ferramentas)
@@ -185,53 +185,142 @@ O servidor MCP implementa exatamente 100 ferramentas organizadas em 10 categoria
 
 ---
 
-## 4. Instalação e Configuração
+## 4. Instalação e Configuração Passo a Passo
 
 ### Pré-requisitos
-- Python 3.11 ou 3.12+
-- Windows 10/11 ou Windows Server com RSAT (Recomendado) ou Linux/macOS com acesso LDAP
+- Python 3.11 ou 3.12+ ([Download Python](https://www.python.org/downloads/))
+- Sistema Operacional:
+  - **Windows 10/11 ou Windows Server** (Recomendado para integração completa via RSAT/ADSI e Credential Vault).
+  - **Linux / macOS** (Suportado para consultas remotas via LDAP/LDAPS).
+- Ferramentas RSAT do Active Directory (opcional no cliente, mas altamente recomendado):
+  ```powershell
+  # Instalação automática do RSAT no Windows 10/11:
+  powershell -ExecutionPolicy Bypass -File scripts/install_rsat.ps1
+  ```
 
-### Instalação Rápida
+---
+
+### Passo 1: Clonar e Instalar Dependências
 
 ```powershell
 # 1. Clone o repositório
-git clone https://github.com/your-org/microsoft-active-directory-mcp.git
+git clone https://github.com/nks1097/microsoft-active-directory-mcp.git
 cd microsoft-active-directory-mcp
 
-# 2. Crie o ambiente virtual
-uv venv --python 3.12
-# ou: python -m venv .venv
+# 2. Executar o instalador automático (Windows):
+.\scripts\setup_env.bat
 
-# 3. Instale as dependências
-uv pip install -e ".[dev]"
-# ou: pip install -r requirements.txt
+# OU fazer a instalação manual com virtualenv:
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -e ".[dev]"
 ```
 
-### Configuração do Arquivo `.env`
+---
 
-Copie `.env.example` para `.env`:
+### Passo 2: Configurar o Arquivo `.env`
 
+Copie o modelo `.env.example` para `.env`:
+```powershell
+copy .env.example .env
+```
+
+Edite o arquivo `.env` com os dados do seu controlador de domínio:
 ```ini
+# Modo de Operação (READ_ONLY por padrão para segurança)
 AD_MCP_MODE=READ_ONLY
+
+# Endereço e Domínio do Active Directory
 AD_SERVER=dc01.corp.contoso.com
 AD_DOMAIN=corp.contoso.com
 AD_PORT=636
 AD_USE_SSL=true
+AD_TLS_VALIDATE_CERT=true
+
+# Método de Autenticação Escolhido
 AD_AUTH_METHOD=credential_manager
 AD_CREDENTIAL_TARGET=AD_MCP_CREDENTIAL
 ```
 
 ---
 
-## 5. Como Conectar ao Claude Desktop / Cursor / Antigravity
+### Passo 3: Onde e Como Colocar a Senha?
 
-Adicione a configuração no arquivo `claude_desktop_config.json` ou `cursor_config.json` (sem senhas em texto puro):
+O servidor suporta **3 métodos de autenticação**. Escolha o mais adequado para o seu cenário:
+
+#### Método A: Windows Credential Vault (Recomendado para Produção — Sem Senhas em Texto Puro)
+Para evitar que senhas administrativas fiquem expostas em arquivos de texto (`.env` ou `mcp_config.json`), o servidor utiliza o **Cofre de Credenciais do Windows com criptografia DPAPI**.
+
+1. Mantenha no seu `.env`:
+   ```ini
+   AD_AUTH_METHOD=credential_manager
+   AD_CREDENTIAL_TARGET=AD_MCP_CREDENTIAL
+   ```
+2. No terminal PowerShell, execute o assistente de gravação segura:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts/set_production_credentials.ps1
+   ```
+3. O terminal solicitará as credenciais (a digitação da senha fica oculta):
+   ```text
+   === Active Directory MCP - Credential Setup ===
+   Digite as credenciais da conta de servico do Active Directory.
+   Usuario (ex: CONTOSO\svc_ad_mcp ou svc_ad@corp.contoso.com): CONTOSO\svc_ad_mcp
+   Senha da conta (a digitacao ficara oculta): **************
+   Credencial para 'CONTOSO\svc_ad_mcp' armazenada com sucesso no Windows Credential Manager.
+   ```
+Pronto! A senha foi gravada com criptografia de sistema operacional vinculada ao seu usuário Windows. O servidor MCP lê a senha da memória criptografada automaticamente em tempo de execução. **Você não precisa colocar senha no `.env` nem no arquivo de configuração do Claude/Cursor.**
+
+---
+
+#### Método B: Autenticação Integrada Windows / Kerberos / SSPI (Sem Senha!)
+Se você está executando em uma máquina ingressada no domínio (`domain-joined`) com um usuário que já possui permissão de leitura no Active Directory:
+
+1. Configure no `.env`:
+   ```ini
+   AD_AUTH_METHOD=windows_integrated
+   ```
+2. **Deixe usuário e senha em branco!** O servidor utilizará o próprio token de segurança Kerberos da sua sessão Windows ativa via SSPI.
+
+---
+
+#### Método C: Variáveis de Ambiente Diretas (Para Linux, Docker, Containers ou CI/CD)
+Se você estiver executando em Linux, Docker ou ambientes onde o Windows Credential Vault não está disponível:
+
+1. Configure no `.env` (ou injete nas variáveis do container/orquestrador):
+   ```ini
+   AD_AUTH_METHOD=env
+   AD_USERNAME=CONTOSO\svc_ad_mcp
+   AD_PASSWORD=SuaSenhaForteAqui
+   ```
+
+---
+
+### Passo 4: Validar a Conectividade
+
+Antes de conectar ao Claude Desktop ou Antigravity, valide se a comunicação com o Active Directory está perfeita executando o diagnóstico integrado:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/test_connectivity.ps1
+```
+
+O diagnóstico validará automaticamente:
+* Resolução de nomes DNS do domínio e do DC.
+* Portas de rede (53 DNS, 88 Kerberos, 389 LDAP, 445 SMB, 636 LDAPS, 3268 Global Catalog).
+* Handshake TLS e certificados digitais.
+* Consulta real ao RootDSE do Active Directory.
+
+---
+
+## 5. Como Conectar aos Clientes de IA
+
+### A. Antigravity IDE / VS Code MCP
+Abra seu arquivo de configuração MCP (`~/.gemini/config/mcp_config.json`) e insira:
 
 ```json
 {
   "mcpServers": {
     "active-directory": {
-      "command": "python",
+      "command": "C:\\caminho\\para\\microsoft-active-directory-mcp\\.venv\\Scripts\\python.exe",
       "args": ["-m", "ad_mcp"],
       "env": {
         "AD_MCP_MODE": "READ_ONLY",
@@ -244,6 +333,30 @@ Adicione a configuração no arquivo `claude_desktop_config.json` ou `cursor_con
   }
 }
 ```
+
+### B. Claude Desktop
+No Claude Desktop, edite `%APPDATA%\Claude\claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "active-directory": {
+      "command": "C:\\caminho\\para\\microsoft-active-directory-mcp\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "ad_mcp"],
+      "env": {
+        "AD_MCP_MODE": "READ_ONLY",
+        "AD_SERVER": "dc01.corp.contoso.com",
+        "AD_DOMAIN": "corp.contoso.com",
+        "AD_AUTH_METHOD": "credential_manager",
+        "AD_CREDENTIAL_TARGET": "AD_MCP_CREDENTIAL"
+      }
+    }
+  }
+}
+```
+
+### C. Cursor AI
+No Cursor, configure em *Features > MCP Servers* apontando para o binário Python do `.venv` com argumento `-m ad_mcp`.
 
 ---
 

@@ -37,3 +37,22 @@ Store the credential once securely via:
 powershell -ExecutionPolicy Bypass -File scripts/set_production_credentials.ps1
 ```
 
+The script interactively prompts:
+```text
+Usuario (ex: CONTOSO\svc_ad_mcp ou svc_ad@corp.contoso.com): CONTOSO\svc_ad_mcp
+Senha da conta (a digitacao ficara oculta): **************
+```
+It securely writes to the Windows Credential Manager (`win32cred.CredWrite`) using `CRED_PERSIST_LOCAL_MACHINE` and Windows DPAPI encryption. In memory, the MCP server calls `win32cred.CredRead` at startup without ever writing the secret to disk.
+
+---
+
+## 4. Environment Variables / Container Secrets (Linux & Docker)
+
+When running on Linux or containerized environments where Windows Credential Manager is not present:
+```ini
+AD_AUTH_METHOD=env
+AD_USERNAME=CONTOSO\svc_ad_mcp
+AD_PASSWORD=YourPasswordInEnvOnly
+```
+Ensure `.env` permissions are restricted to the executing service user (`chmod 600 .env`) or inject secrets directly into memory via Kubernetes Secrets / Docker Compose.
+

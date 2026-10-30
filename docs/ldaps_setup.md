@@ -86,3 +86,4 @@ The diagnostic output will confirm:
        Validade:  ate 2029-10-30
   [OK] A autoridade certificadora (CA) e confiavel nesta maquina.
 ```
+

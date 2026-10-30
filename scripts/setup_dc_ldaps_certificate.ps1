@@ -99,3 +99,4 @@ Write-Host "  3. Execute o teste de conectividade para validar o handshake:" -Fo
 Write-Host "     powershell -ExecutionPolicy Bypass -File scripts/test_connectivity.ps1" -ForegroundColor Green
 Write-Host ""
 Write-Host "Configuracao de LDAPS no Controlador de Dominio concluida com sucesso!" -ForegroundColor Cyan
+

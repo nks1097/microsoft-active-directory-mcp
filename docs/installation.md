@@ -45,7 +45,7 @@ powershell -ExecutionPolicy Bypass -File scripts/install_rsat.ps1
 ### Step 2: Clone and Setup Python Environment
 
 ```powershell
-git clone https://github.com/your-org/microsoft-active-directory-mcp.git
+git clone https://github.com/nks1097/microsoft-active-directory-mcp.git
 cd microsoft-active-directory-mcp
 
 # Using uv (fastest):
@@ -58,26 +58,62 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### Step 3: Configure Environment Variables
+### Step 3: Configure Authentication & Store Passwords Securely
 
-Copy `.env.example` to `.env` and fill in your domain details:
+The server supports three authentication methods:
 
-```ini
-AD_MCP_MODE=READ_ONLY
-AD_SERVER=dc01.corp.contoso.com
-AD_DOMAIN=corp.contoso.com
-AD_PORT=636
-AD_USE_SSL=true
-AD_AUTH_METHOD=credential_manager
-AD_CREDENTIAL_TARGET=AD_MCP_CREDENTIAL
-```
+#### Method 1: Windows Credential Vault (Production Recommended — Zero Plaintext Passwords)
+This method encrypts your service account credentials directly into the Windows OS Credential Manager using the **Data Protection API (DPAPI)**. No passwords will ever be saved to `.env` or client configuration files.
 
-Store the service account credentials encrypted with DPAPI (no plaintext passwords):
+1. Configure `.env`:
+   ```ini
+   AD_MCP_MODE=READ_ONLY
+   AD_SERVER=dc01.corp.contoso.com
+   AD_DOMAIN=corp.contoso.com
+   AD_PORT=636
+   AD_USE_SSL=true
+   AD_TLS_VALIDATE_CERT=true
+   AD_AUTH_METHOD=credential_manager
+   AD_CREDENTIAL_TARGET=AD_MCP_CREDENTIAL
+   ```
+
+2. Store the password encrypted via the setup script:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts/set_production_credentials.ps1
+   ```
+   Follow the interactive prompt:
+   - **User:** Type your service account (e.g., `CONTOSO\svc_ad_mcp` or `svc_ad@corp.contoso.com`).
+   - **Password:** Type the password (typing is masked for privacy).
+
+#### Method 2: Windows Integrated Authentication (SSPI / Kerberos — No Password Needed)
+If the server runs on a domain-joined machine under an account that already has Active Directory read access:
+1. Configure `.env`:
+   ```ini
+   AD_AUTH_METHOD=windows_integrated
+   ```
+2. Leave username and password blank! Windows authenticates seamlessly via Kerberos tickets.
+
+#### Method 3: Direct Environment Variables (Linux, Docker, or CI/CD)
+When running on Linux or inside Docker containers where the Windows Vault is not present:
+1. Configure `.env` (or pass as container environment variables):
+   ```ini
+   AD_AUTH_METHOD=env
+   AD_USERNAME=CONTOSO\svc_ad_mcp
+   AD_PASSWORD=YourPasswordInEnvOnly
+   ```
+
+---
+
+### Step 4: Verify Connectivity & Active Directory Bind
+
+Run the diagnostic script to test DNS, port status, and AD bind:
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/set_production_credentials.ps1
+powershell -ExecutionPolicy Bypass -File scripts/test_connectivity.ps1
 ```
 
-### Step 4: Run the MCP Server
+---
+
+### Step 5: Run the MCP Server
 
 ```powershell
 .\.venv\Scripts\python -m ad_mcp
@@ -90,7 +126,7 @@ powershell -ExecutionPolicy Bypass -File scripts/set_production_credentials.ps1
 For Linux workstations or containerized deployments querying AD remotely over LDAP/LDAPS:
 
 ```bash
-git clone https://github.com/your-org/microsoft-active-directory-mcp.git
+git clone https://github.com/nks1097/microsoft-active-directory-mcp.git
 cd microsoft-active-directory-mcp
 
 python3 -m venv .venv
