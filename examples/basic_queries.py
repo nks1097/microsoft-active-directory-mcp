@@ -3,9 +3,10 @@ Example script demonstrating direct programmatic consumption of AD MCP tools.
 """
 
 import json
+
 from ad_mcp.tools.domain import ad_get_domain_info, ad_get_fsmo_roles
+from ad_mcp.tools.security import ad_get_domain_admins, ad_get_locked_accounts
 from ad_mcp.tools.users import ad_list_users
-from ad_mcp.tools.security import ad_get_locked_accounts, ad_get_domain_admins
 
 
 def main():

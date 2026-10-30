@@ -8,6 +8,7 @@ Supports:
 
 import logging
 from typing import Optional, Tuple
+
 from ad_mcp.config import AuthMethod, settings
 
 logger = logging.getLogger("ad_mcp.auth")

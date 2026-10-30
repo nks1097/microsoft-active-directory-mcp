@@ -84,6 +84,14 @@ class Settings(BaseSettings):
         default=False,
         description="Use LDAPS (SSL/TLS)",
     )
+    tls_validate_cert: bool = Field(
+        default=True,
+        description="Validate TLS certificates in LDAPS connections (enforces enterprise CA validation)",
+    )
+    ca_certs_file: Optional[str] = Field(
+        default=None,
+        description="Optional custom path to CA bundle / certificate file (.pem or .cer) for LDAPS validation",
+    )
     username: Optional[str] = Field(
         default=None,
         description="Service account username (DOMAIN\\User or user@domain.local)",

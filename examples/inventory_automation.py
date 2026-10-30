@@ -3,6 +3,7 @@ Example script demonstrating automated inventory collection and compliance audit
 """
 
 import json
+
 from ad_mcp.tools.reports import ad_generate_domain_inventory, ad_run_compliance_assessment
 
 

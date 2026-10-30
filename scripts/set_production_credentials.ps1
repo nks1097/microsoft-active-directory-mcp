@@ -1,64 +1,63 @@
-<#
-.SYNOPSIS
-    Stores Active Directory credentials securely into Windows Credential Manager.
-.DESCRIPTION
-    Prompts the administrator directly in the console (with password masking) and stores them
-    encrypted with Windows DPAPI into the Windows Credential Vault under 'AD_MCP_CREDENTIAL'.
-    This completely eliminates plaintext passwords from .env and mcp_config.json.
-#>
+$ErrorActionPreference = "Stop"
 
-param(
-    [string]$TargetName = "AD_MCP_CREDENTIAL",
-    [string]$Username,
-    [string]$Password
-)
+Write-Host "=== Active Directory MCP - Credential Setup ===" -ForegroundColor Cyan
 
-Write-Host "=== Active Directory MCP - Secure Credential Vault Setup ===" -ForegroundColor Cyan
-
-# 1. Prompt for username if not provided via parameter
-if (-not $Username) {
-    $Username = Read-Host "Digite o usuario da conta de servico (ex: nks1097\Administrator)"
-}
-
-# 2. Prompt for password with console masking (asterisks / hidden) if not provided
-if (-not $Password) {
-    $secPass = Read-Host "Digite a senha (a digitacao ficara oculta)" -AsSecureString
-    $credTemp = New-Object System.Management.Automation.PSCredential($Username, $secPass)
-    $Password = $credTemp.GetNetworkCredential().Password
-}
-
-if ([string]::IsNullOrWhiteSpace($Username) -or [string]::IsNullOrWhiteSpace($Password)) {
-    Write-Error "Usuario ou senha em branco. Operacao cancelada."
-    exit 1
-}
-
-# 3. Locate project virtual environment Python or fallback to PATH
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$pythonBin = if (Test-Path "$scriptDir\..\.venv\Scripts\python.exe") { 
-    "$scriptDir\..\.venv\Scripts\python.exe" 
-} else { 
-    "python" 
+$projectRoot = Split-Path -Parent $scriptDir
+$pythonBin = Join-Path $projectRoot ".venv\Scripts\python.exe"
+
+if (-not (Test-Path $pythonBin)) {
+    throw "Python da virtualenv nao encontrado: $pythonBin. Execute primeiro o setup_env.bat ou uv venv."
 }
 
-# 4. Pass credentials safely via ephemeral environment variables
-$env:_TEMP_VAULT_USER = $Username
-$env:_TEMP_VAULT_PASS = $Password
+# Codigo fixo: nenhuma entrada do usuario e interpolada nele (evita injecao e exposicao)
+$pythonCode = @'
+import getpass
+import sys
 
-& $pythonBin -c "
-import os
-from ad_mcp.auth.credentials import credential_manager
-u = os.environ.pop('_TEMP_VAULT_USER', '')
-p = os.environ.pop('_TEMP_VAULT_PASS', '')
-credential_manager.store_in_vault('$TargetName', u, p)
-print(f'SUCCESS: Credenciais para ''{u}'' salvas com criptografia DPAPI no cofre sob ''$TargetName''.')
-"
+try:
+    from ad_mcp.auth.credentials import credential_manager
+except ImportError as e:
+    print(f"ERRO: Nao foi possivel importar ad_mcp: {e}", file=sys.stderr)
+    sys.exit(1)
 
-# Clean up memory
-$Password = $null
-$env:_TEMP_VAULT_USER = $null
-$env:_TEMP_VAULT_PASS = $null
+target = "AD_MCP_CREDENTIAL"
 
-Write-Host ""
-Write-Host "Concluido com sucesso!" -ForegroundColor Green
-Write-Host "As credenciais foram criptografadas pelo Windows e estao protegidas no Cofre de Credenciais." -ForegroundColor Green
-Write-Host "Voce NAO precisa colocar senhas no .env ou no mcp_config.json." -ForegroundColor Green
+print("Digite as credenciais da conta de servico do Active Directory.")
+username = input("Usuario (ex: nks1097\\Administrator ou svc_ad@nks1097.local): ").strip()
+
+if not username:
+    print("ERRO: O nome de usuario nao pode ser vazio.", file=sys.stderr)
+    sys.exit(1)
+
+password = getpass.getpass("Senha da conta (a digitacao ficara oculta): ")
+
+if not password:
+    print("ERRO: A senha nao pode ser vazia.", file=sys.stderr)
+    sys.exit(1)
+
+try:
+    credential_manager.store_in_vault(target, username, password)
+    print(f"Credencial para '{username}' armazenada com sucesso no Windows Credential Manager.")
+    print("Nenhuma senha sera exibida ou gravada em texto puro em arquivos.")
+except Exception as ex:
+    print(f"ERRO ao gravar no Cofre do Windows: {ex}", file=sys.stderr)
+    sys.exit(2)
+'@
+
+Push-Location $projectRoot
+
+try {
+    & $pythonBin -c $pythonCode
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Falha ao armazenar a credencial. Codigo de saida do Python: $LASTEXITCODE"
+    }
+
+    Write-Host ""
+    Write-Host "Armazenamento concluido com sucesso." -ForegroundColor Green
+    Write-Host "Voce pode remover qualquer referencia a AD_PASSWORD do seu .env e mcp_config.json." -ForegroundColor Green
+}
+finally {
+    Pop-Location
+}

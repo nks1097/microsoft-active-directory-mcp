@@ -42,7 +42,13 @@ class LdapClient:
         try:
             tls = None
             if use_ssl:
-                tls = ldap3.Tls(validate=ldap3.ssl.CERT_NONE)
+                import ssl
+
+                validate_mode = ssl.CERT_REQUIRED if settings.tls_validate_cert else ssl.CERT_NONE
+                tls = ldap3.Tls(
+                    validate=validate_mode,
+                    ca_certs_file=settings.ca_certs_file,
+                )
 
             server = ldap3.Server(
                 server_host,
