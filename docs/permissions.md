@@ -28,8 +28,8 @@ This guide details the minimum Active Directory permissions required for each to
 To delegate user management to a service account `svc_ad_mcp` over an OU without granting Domain Admin:
 
 ```powershell
-$ou = [adsi]"LDAP://OU=Colaboradores,DC=nks1097,DC=local"
-$identity = "nks1097\svc_ad_mcp"
+$ou = [adsi]"LDAP://OU=Employees,DC=corp,DC=contoso,DC=com"
+$identity = "CONTOSO\svc_ad_mcp"
 
 # Grant Reset Password rights
 $rule = New-Object System.DirectoryServices.ActiveDirectoryAccessRule(

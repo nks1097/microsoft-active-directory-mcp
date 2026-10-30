@@ -20,3 +20,4 @@ def test_ldap_rejects_empty_credentials_without_simple_bind_fallback():
 def test_ldaps_tls_configuration_defaults_to_cert_required():
     """Verify that tls_validate_cert defaults to True."""
     assert settings.tls_validate_cert is True
+

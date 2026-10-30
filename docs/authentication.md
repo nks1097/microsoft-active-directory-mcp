@@ -21,14 +21,19 @@ When running on a domain-joined Windows machine with the operator logged in unde
 - Leave `AD_USERNAME` and `AD_PASSWORD` empty in `.env`.
 - The MCP server automatically uses the existing Windows Kerberos token via SSPI!
 
-## 3. Dedicated Service Account (Remote / Non-Domain Hosts)
+## 3. Dedicated Service Account with Windows Credential Manager (Zero Plaintext Secrets)
 
-When running from a standalone machine (such as a developer workstation or container):
+When running with a dedicated service account, never store the password in plaintext:
 ```ini
-AD_SERVER=192.168.0.201
-AD_DOMAIN=nks1097.local
-AD_USERNAME=nks1097\svc_ad_mcp
-AD_PASSWORD=YourStrongServiceAccountPassword
+AD_SERVER=dc01.corp.contoso.com
+AD_DOMAIN=corp.contoso.com
+AD_PORT=636
+AD_USE_SSL=true
+AD_AUTH_METHOD=credential_manager
+AD_CREDENTIAL_TARGET=AD_MCP_CREDENTIAL
 ```
-The server will construct an authenticated session using either SecureString credentials via PowerShell or SASL/NTLM/LDAPS over LDAP.
+Store the credential once securely via:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/set_production_credentials.ps1
+```
 

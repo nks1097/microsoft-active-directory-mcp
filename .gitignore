@@ -30,9 +30,15 @@ venv.bak/
 
 # Environment Variables & Secrets
 .env
+.env.*
+!.env.example
 *.pem
 *.key
 *.pfx
+*.cer
+*.crt
+mcp_config.json
+credentials.json
 
 # Testing & Coverage
 .pytest_cache/

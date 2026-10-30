@@ -64,10 +64,17 @@ Copy `.env.example` to `.env` and fill in your domain details:
 
 ```ini
 AD_MCP_MODE=READ_ONLY
-AD_SERVER=192.168.0.201
-AD_DOMAIN=nks1097.local
-AD_USERNAME=nks1097\Administrator
-AD_PASSWORD=YourSecurePassword
+AD_SERVER=dc01.corp.contoso.com
+AD_DOMAIN=corp.contoso.com
+AD_PORT=636
+AD_USE_SSL=true
+AD_AUTH_METHOD=credential_manager
+AD_CREDENTIAL_TARGET=AD_MCP_CREDENTIAL
+```
+
+Store the service account credentials encrypted with DPAPI (no plaintext passwords):
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/set_production_credentials.ps1
 ```
 
 ### Step 4: Run the MCP Server

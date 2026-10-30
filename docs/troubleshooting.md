@@ -44,7 +44,7 @@ Add-WindowsCapability -Online -Name "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.
 **Diagnostic Check:**
 Run `scripts/test_connectivity.ps1` to test connectivity and check credentials:
 ```powershell
-powershell -File scripts/test_connectivity.ps1 -Server 192.168.0.201 -Domain nks1097.local
+powershell -File scripts/test_connectivity.ps1 -Server dc01.corp.contoso.com -Domain corp.contoso.com
 ```
 
 ---

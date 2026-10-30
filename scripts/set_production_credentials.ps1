@@ -24,7 +24,7 @@ except ImportError as e:
 target = "AD_MCP_CREDENTIAL"
 
 print("Digite as credenciais da conta de servico do Active Directory.")
-username = input("Usuario (ex: nks1097\\Administrator ou svc_ad@nks1097.local): ").strip()
+username = input("Usuario (ex: CONTOSO\\svc_ad_mcp ou svc_ad_mcp@corp.contoso.com): ").strip()
 
 if not username:
     print("ERRO: O nome de usuario nao pode ser vazio.", file=sys.stderr)

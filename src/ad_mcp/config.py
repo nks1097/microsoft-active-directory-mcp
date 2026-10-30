@@ -74,11 +74,11 @@ class Settings(BaseSettings):
     # Active Directory Connection
     server: str = Field(
         default="127.0.0.1",
-        description="Domain Controller host or IP address (e.g. 192.168.0.201 or dc1.domain.local)",
+        description="Domain Controller host or IP address (e.g. dc01.corp.contoso.com or 10.0.0.10)",
     )
     domain: str = Field(
         default="",
-        description="AD Domain name (e.g. nks1097.local)",
+        description="AD Domain name (e.g. corp.contoso.com)",
     )
     port: int = Field(
         default=389,
@@ -114,7 +114,7 @@ class Settings(BaseSettings):
     )
     base_dn: Optional[str] = Field(
         default=None,
-        description="Default naming context (e.g. DC=nks1097,DC=local). Auto-detected if omitted.",
+        description="Default naming context (e.g. DC=corp,DC=contoso,DC=com). Auto-detected if omitted.",
     )
     backend: BackendType = Field(
         default=BackendType.HYBRID,

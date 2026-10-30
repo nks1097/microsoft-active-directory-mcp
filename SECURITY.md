@@ -14,7 +14,7 @@ Active Directory is a critical identity infrastructure component. We take securi
 
 To report a vulnerability:
 1. Open a private GitHub Security Advisory in this repository, or
-2. Email the maintainers directly at security@nks1097.local (or the primary GitHub contact).
+2. Contact the maintainers through the repository security contacts.
 
 Please include:
 - Description of the vulnerability.

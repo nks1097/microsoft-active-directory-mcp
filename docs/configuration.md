@@ -20,7 +20,7 @@ All configurations are driven by environment variables or an optional `.env` fil
 | :--- | :---: | :---: | :--- |
 | `AD_MCP_MODE` | String | `READ_ONLY` | Server operational mode (`READ_ONLY`, `WRITE_APPROVAL`, `FULL_ADMIN`) |
 | `AD_SERVER` | String | `127.0.0.1` | Domain Controller IP or FQDN |
-| `AD_DOMAIN` | String | `""` | Active Directory Domain Name (e.g., `nks1097.local`) |
+| `AD_DOMAIN` | String | `""` | Active Directory Domain Name (e.g., `corp.contoso.com`) |
 | `AD_PORT` | Integer | `389` | LDAP (389) or LDAPS (636) port |
 | `AD_USE_SSL` | Boolean | `false` | Enable TLS/SSL encrypted connection |
 | `AD_USERNAME` | String | `null` | Service account (`DOMAIN\User` or `user@domain.local`) |

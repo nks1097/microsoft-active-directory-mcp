@@ -7,10 +7,25 @@
 #>
 
 param(
-    [string]$Server = "SERVIDOR-2.nks1097.local",
-    [string]$Domain = "nks1097.local",
+    [string]$Server,
+    [string]$Domain,
     [int]$LdapsPort = 636
 )
+
+# Auto-detect from local .env if parameters are omitted
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectRoot = Split-Path -Parent $scriptDir
+$envFile = Join-Path $projectRoot ".env"
+
+if (Test-Path $envFile) {
+    Get-Content $envFile | ForEach-Object {
+        if ($_ -match "^\s*AD_SERVER\s*=\s*(.+)$" -and -not $Server) { $Server = $matches[1].Trim() }
+        if ($_ -match "^\s*AD_DOMAIN\s*=\s*(.+)$" -and -not $Domain) { $Domain = $matches[1].Trim() }
+    }
+}
+
+if (-not $Server) { $Server = "dc01.corp.contoso.com" }
+if (-not $Domain) { $Domain = "corp.contoso.com" }
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "    ACTIVE DIRECTORY ENTERPRISE CONNECTIVITY DIAGNOSTICS   " -ForegroundColor Cyan

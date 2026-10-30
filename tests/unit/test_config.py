@@ -17,5 +17,5 @@ def test_base_dn_calculation():
     s = Settings(domain="corp.contoso.com")
     assert s.effective_base_dn == "DC=corp,DC=contoso,DC=com"
 
-    s2 = Settings(domain="nks1097.local", base_dn="DC=custom,DC=local")
+    s2 = Settings(domain="corp.contoso.com", base_dn="DC=custom,DC=local")
     assert s2.effective_base_dn == "DC=custom,DC=local"

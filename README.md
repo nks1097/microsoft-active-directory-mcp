@@ -213,17 +213,19 @@ Copie `.env.example` para `.env`:
 
 ```ini
 AD_MCP_MODE=READ_ONLY
-AD_SERVER=192.168.0.201
-AD_DOMAIN=nks1097.local
-AD_USERNAME=nks1097\Administrator
-AD_PASSWORD=SuaSenhaSeguraAqui
+AD_SERVER=dc01.corp.contoso.com
+AD_DOMAIN=corp.contoso.com
+AD_PORT=636
+AD_USE_SSL=true
+AD_AUTH_METHOD=credential_manager
+AD_CREDENTIAL_TARGET=AD_MCP_CREDENTIAL
 ```
 
 ---
 
 ## 5. Como Conectar ao Claude Desktop / Cursor / Antigravity
 
-Adicione a configuração no arquivo `claude_desktop_config.json` ou `cursor_config.json`:
+Adicione a configuração no arquivo `claude_desktop_config.json` ou `cursor_config.json` (sem senhas em texto puro):
 
 ```json
 {
@@ -233,10 +235,10 @@ Adicione a configuração no arquivo `claude_desktop_config.json` ou `cursor_con
       "args": ["-m", "ad_mcp"],
       "env": {
         "AD_MCP_MODE": "READ_ONLY",
-        "AD_SERVER": "192.168.0.201",
-        "AD_DOMAIN": "nks1097.local",
-        "AD_USERNAME": "nks1097\\Administrator",
-        "AD_PASSWORD": "SuaSenhaAqui"
+        "AD_SERVER": "dc01.corp.contoso.com",
+        "AD_DOMAIN": "corp.contoso.com",
+        "AD_AUTH_METHOD": "credential_manager",
+        "AD_CREDENTIAL_TARGET": "AD_MCP_CREDENTIAL"
       }
     }
   }
@@ -249,7 +251,7 @@ Adicione a configuração no arquivo `claude_desktop_config.json` ou `cursor_con
 
 Uma vez conectado, o agente de IA pode responder a perguntas como:
 
-- *"Liste os usuários desabilitados do domínio nks1097.local"*
+- *"Liste os usuários desabilitados do domínio corp.contoso.com"*
 - *"Quais usuários possuem privilégios administrativos no domínio?"*
 - *"Encontre computadores que não fazem logon há mais de 90 dias."*
 - *"Verifique a saúde dos controladores de domínio e o status da replicação."*
