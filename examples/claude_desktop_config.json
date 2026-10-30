@@ -10,10 +10,9 @@
         "AD_MCP_MODE": "READ_ONLY",
         "AD_SERVER": "192.168.0.201",
         "AD_DOMAIN": "nks1097.local",
-        "AD_USERNAME": "nks1097\\Administrator",
-        "AD_PASSWORD": "YourStrongPasswordHere"
+        "AD_AUTH_METHOD": "credential_manager",
+        "AD_CREDENTIAL_TARGET": "AD_MCP_CREDENTIAL"
       }
     }
   }
 }
-

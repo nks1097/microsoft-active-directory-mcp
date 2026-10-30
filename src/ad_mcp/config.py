@@ -17,6 +17,15 @@ class OperationMode(str, Enum):
     FULL_ADMIN = "FULL_ADMIN"
 
 
+class AuthMethod(str, Enum):
+    """Authentication Method for Active Directory."""
+
+    AUTO = "auto"
+    WINDOWS_INTEGRATED = "windows_integrated"
+    CREDENTIAL_MANAGER = "credential_manager"
+    ENV = "env"
+
+
 class BackendType(str, Enum):
     """AD Integration Backend."""
 
@@ -82,6 +91,14 @@ class Settings(BaseSettings):
     password: Optional[SecretStr] = Field(
         default=None,
         description="Service account password",
+    )
+    auth_method: AuthMethod = Field(
+        default=AuthMethod.AUTO,
+        description="Enterprise Auth: 'windows_integrated' (Kerberos/SSPI - no password), 'credential_manager' (Windows Vault), 'env', or 'auto'",
+    )
+    credential_target: str = Field(
+        default="AD_MCP_CREDENTIAL",
+        description="Target entry name in Windows Credential Manager / Vault",
     )
     base_dn: Optional[str] = Field(
         default=None,
