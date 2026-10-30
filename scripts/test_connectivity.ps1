@@ -129,7 +129,7 @@ try {
     $pythonBin = Join-Path $projectRoot ".venv\Scripts\python.exe"
     
     if (Test-Path $pythonBin) {
-        $pyCheck = "from ad_mcp.tools.domain import ad_get_domain_info; res = ad_get_domain_info(); data = res.get('data', {}); ok = res.get('success'); print('  [OK] Consulta AD bem-sucedida!' if ok else '  [FALHA] ' + str(res.get('error'))); print('       DistinguishedName:', data.get('DistinguishedName')); print('       DnsRoot:          ', data.get('DnsRoot')); print('       Forest:           ', data.get('Forest'))"
+        $pyCheck = "import sys, os; sys.path.insert(0, os.path.join(r'''$projectRoot''', 'src')); from ad_mcp.tools.domain import ad_get_domain_info; res = ad_get_domain_info(); data = res.get('data', {}); ok = res.get('success'); print('  [OK] Consulta AD bem-sucedida!' if ok else '  [FALHA] ' + str(res.get('error'))); print('       DistinguishedName:', data.get('DistinguishedName')); print('       DnsRoot:          ', data.get('DnsRoot')); print('       Forest:           ', data.get('Forest'))"
         & $pythonBin -c $pyCheck
     }
 } catch {
