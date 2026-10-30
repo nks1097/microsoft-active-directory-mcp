@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "active-directory": {
+      "command": "python",
+      "args": [
+        "-m",
+        "ad_mcp"
+      ],
+      "env": {
+        "AD_MCP_MODE": "READ_ONLY",
+        "AD_SERVER": "192.168.0.201",
+        "AD_DOMAIN": "nks1097.local",
+        "AD_USERNAME": "nks1097\\Administrator",
+        "AD_PASSWORD": "YourStrongPasswordHere"
+      }
+    }
+  }
+}
+

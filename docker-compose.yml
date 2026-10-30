@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  ad-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: microsoft-active-directory-mcp
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - AD_BACKEND=ldap
+      - AD_MCP_MODE=${AD_MCP_MODE:-READ_ONLY}
+    volumes:
+      - ./logs:/app/logs
+      - ./reports_output:/app/reports_output
+    stdin_open: true
+    tty: true
+

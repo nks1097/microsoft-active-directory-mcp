@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "microsoft-active-directory-mcp"
+version = "1.0.0"
+description = "Production-ready Model Context Protocol (MCP) server for Microsoft Active Directory featuring 100 essential tools."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Natanael Krindges" },
+    { name = "Open Source Community" }
+]
+license = { text = "MIT" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Systems Administration",
+    "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
+]
+dependencies = [
+    "mcp>=2.0.0",
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.2.0",
+    "ldap3>=2.9.1",
+    "pycryptodome>=3.20.0",
+    "dnspython>=2.6.0",
+    "cryptography>=42.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.3.0",
+    "mypy>=1.9.0",
+]
+
+[project.scripts]
+ad-mcp = "ad_mcp.server:run_stdio"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ad_mcp"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ad_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
