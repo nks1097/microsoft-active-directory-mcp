@@ -105,7 +105,14 @@ class ADBridge:
     ) -> Tuple[bool, Any, Optional[str]]:
         """
         Execute an AD write/mutation operation.
+        Enforces a hard security barrier if server is in READ_ONLY mode.
         """
+        from ad_mcp.config import OperationMode
+
+        if settings.mcp_mode == OperationMode.READ_ONLY:
+            logger.warning("HARD BLOCK: Mutation rejected because server is operating in READ_ONLY mode.")
+            return False, None, "Operacao de escrita bloqueada: O servidor MCP esta configurado em modo READ_ONLY."
+
         cred_header = self._get_ps_credential_block()
 
         # RSAT is the preferred, robust way for AD DS mutations

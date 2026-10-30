@@ -1,13 +1,14 @@
 """
 LDAP integration layer using ldap3.
-Provides high-performance, cross-platform LDAP and LDAPS queries.
+Provides high-performance, cross-platform LDAP and LDAPS queries with strict TLS Certificate Validation.
 """
 
 import logging
+import ssl
 from typing import Any, Dict, List, Optional, Tuple
 
 from ad_mcp.auth.credentials import credential_manager
-from ad_mcp.config import settings
+from ad_mcp.config import AuthMethod, settings
 
 logger = logging.getLogger("ad_mcp.ldap")
 
@@ -30,11 +31,28 @@ class LdapClient:
         return LDAP3_AVAILABLE
 
     def get_connection(self) -> Tuple[bool, Any, Optional[str]]:
-        """Establish or return an active LDAP connection."""
+        """Establish or return an active LDAP connection with strict TLS verification."""
         if not LDAP3_AVAILABLE:
             return False, None, "ldap3 package is not installed"
 
         username, password = credential_manager.get_credentials()
+
+        # Guard: Never attempt an empty simple bind as a substitute for Kerberos/SSPI
+        if not username or not password:
+            if settings.auth_method == AuthMethod.WINDOWS_INTEGRATED:
+                return (
+                    False,
+                    None,
+                    "Conexao LDAP direta nao suporta autenticacao anonima. "
+                    "Para autenticacao integrada do Windows (Kerberos/SSPI), utilize o backend 'powershell' ou 'hybrid'.",
+                )
+            return (
+                False,
+                None,
+                "Credenciais nao encontradas. Configure as credenciais no Windows Credential Manager "
+                "('AD_MCP_CREDENTIAL') ou no ambiente antes de executar consultas LDAP.",
+            )
+
         server_host = settings.server
         port = settings.port
         use_ssl = settings.use_ssl
@@ -42,12 +60,23 @@ class LdapClient:
         try:
             tls = None
             if use_ssl:
-                import ssl
+                # Production TLS: Enforce CERT_REQUIRED and valid names
+                validate_mode = ssl.CERT_REQUIRED
+                if not settings.tls_validate_cert:
+                    logger.warning("SECURITY WARNING: TLS certificate validation is disabled via configuration.")
+                    validate_mode = ssl.CERT_NONE
 
-                validate_mode = ssl.CERT_REQUIRED if settings.tls_validate_cert else ssl.CERT_NONE
+                # Configure authorized DNS hostnames from configuration to prevent MITM
+                valid_names = []
+                if server_host and not server_host.replace(".", "").isdigit():
+                    valid_names.append(server_host)
+                if settings.domain:
+                    valid_names.append(f"*.{settings.domain}")
+
                 tls = ldap3.Tls(
                     validate=validate_mode,
                     ca_certs_file=settings.ca_certs_file,
+                    valid_names=valid_names if valid_names else None,
                 )
 
             server = ldap3.Server(
@@ -62,8 +91,8 @@ class LdapClient:
             auth_type = ldap3.SIMPLE
             user_dn = username
 
-            # Check if domain\user is provided and NTLM can be used
-            if username and "\\" in username:
+            # Check if domain\user is provided and NTLM is requested
+            if username and "\\" in username and not use_ssl:
                 auth_type = ldap3.NTLM
 
             conn = ldap3.Connection(
@@ -72,17 +101,28 @@ class LdapClient:
                 password=password,
                 authentication=auth_type,
                 auto_bind=False,
-                read_only=settings.mcp_mode.value == "READ_ONLY",
+                read_only=True if settings.mcp_mode.value == "READ_ONLY" else False,
             )
 
             if not conn.bind():
-                err = f"LDAP bind failed: {conn.result.get('description', 'Unknown error')} - {conn.result.get('message', '')}"
+                # Sanitize error message to prevent leaking any credential details
+                description = conn.result.get("description", "Authentication failed")
+                code = conn.result.get("result", "UNKNOWN")
+                err = f"Falha na autenticacao LDAP (Codigo {code}): {description}."
                 return False, None, err
 
             return True, conn, None
 
+        except ssl.SSLError as se:
+            logger.error(f"LDAPS SSL/TLS verification failed: {se}")
+            return (
+                False,
+                None,
+                f"Falha de validacao TLS/SSL ao conectar em {server_host}:{port}. "
+                "Verifique se o certificado do Domain Controller e valido e confiavel.",
+            )
         except Exception as e:
-            return False, None, f"LDAP connection error: {str(e)}"
+            return False, None, f"Erro de conexao LDAP: {str(e)}"
 
     def search(
         self,

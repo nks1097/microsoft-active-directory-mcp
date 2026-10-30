@@ -84,7 +84,20 @@ In `WRITE_APPROVAL` mode:
 
 ---
 
-## 4. Structured JSON Audit Logging
+## 5. Security & Feature Implementation Matrix
+
+| Capability / Feature | Status | Verification & Evidence | Notes |
+| :--- | :---: | :--- | :--- |
+| **100 Tools Implementation** | `TESTED` | `tests/unit/test_all_tools_mocked.py` (23 tests passing) | Exact 100 functional tools across 10 categories. |
+| **Windows Credential Manager (DPAPI)** | `TESTED` | `tests/unit/test_credentials_vault.py` (Real OS CredWrite/CredRead) | Encrypted storage via Windows Local Security Authority. |
+| **Centralized READ_ONLY Guard** | `TESTED` | `tests/unit/test_readonly_hard_block.py` | Hard-blocks mutations in both `auth_engine` and `ad_bridge.run_mutation`. |
+| **LDAPS TLS Certificate Validation** | `IMPLEMENTED` | `src/ad_mcp/integrations/ldap.py`, `scripts/test_connectivity.ps1` | Enforces `ssl.CERT_REQUIRED`, checks SAN/CN, blocks `CERT_NONE`. |
+| **Critical Object Protection** | `TESTED` | `tests/unit/test_guardrails.py` | Prevents deletion of `Domain Admins`, `krbtgt`, `Administrator`, etc. |
+| **Approval Tokens (HMAC-SHA256)** | `TESTED` | `tests/unit/test_authorization.py` | Single-use tokens with 300s TTL for `WRITE_APPROVAL` mode. |
+| **Audit Logging & Redaction** | `TESTED` | `src/ad_mcp/audit/logger.py` | Masks passwords, tokens, hashes; logs `correlation_id` and operator. |
+| **Windows Integrated Auth (SSPI)** | `PARTIAL` | Functional via PowerShell/ADSI bridge under domain user/gMSA | Direct LDAP requires `AD_MCP_CREDENTIAL` or SASL GSSAPI ticket. |
+| **AD Recycle Bin Object Restoration** | `NOT_IMPLEMENTED` | Planned for v1.1 | Restoration of tombstoned objects (`Restore-ADObject`). |
+
 
 Every execution generates an immutable audit record in `logs/ad_audit.jsonl`:
 
